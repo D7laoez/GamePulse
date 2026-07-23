@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverActions: true,
-  },
   images: {
-    domains: ['localhost', 'example.com', 'cdn.example.com'],
+    domains: ['localhost', 'example.com', 'cdn.example.com', 'images.unsplash.com', 'cdn.cloudflare.steamstatic.com'],
     formats: ['image/webp', 'image/avif'],
   },
   async redirects() {
