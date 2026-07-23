@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: gamepulse_postgres
+    environment:
+      POSTGRES_DB: gamepulse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gamepulse_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: gamepulse_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - gamepulse_network
+
+volumes:
+  postgres_data:
+
+networks:
+  gamepulse_network:
+    driver: bridge

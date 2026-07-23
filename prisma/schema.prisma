@@ -1,0 +1,538 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String        @id @default(cuid())
+  email                 String        @unique
+  password              String?
+  name                  String?
+  avatar                String?
+  bio                   String?
+  emailVerified         DateTime?
+  role                  UserRole      @default(USER)
+  isActive              Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  
+  googleId              String?
+  githubId              String?
+  
+  preferences           Json?
+  
+  favorites             Favorite[]
+  wishlists             Wishlist[]
+  ratings               Rating[]
+  reviews               Review[]
+  comments              Comment[]
+  notifications         Notification[]
+  searchHistory         SearchHistory[]
+  viewedGames           ViewedGame[]
+  followedUsers         UserFollows[] @relation("FollowedUsers")
+  followingUsers        UserFollows[] @relation("FollowingUsers")
+  
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+model UserFollows {
+  id            String   @id @default(cuid())
+  followerId    String
+  followingId   String
+  createdAt     DateTime @default(now())
+  
+  follower      User     @relation("FollowedUsers", fields: [followerId], references: [id])
+  following     User     @relation("FollowingUsers", fields: [followingId], references: [id])
+  
+  @@unique([followerId, followingId])
+  @@map("user_follows")
+}
+
+model Game {
+  id                    String          @id @default(cuid())
+  slug                  String          @unique
+  title                 String
+  description           String
+  story                 String?
+  releaseDate           DateTime?
+  price                 Float?
+  discountPercentage    Int?            @default(0)
+  esrbRating            String?
+  pegiRating            String?
+  overallRating         Float?
+  ratingCount           Int             @default(0)
+  genres                String[]
+  platforms             String[]
+  languages             String[]
+  multiplayer           Boolean         @default(false)
+  systemRequirements    Json?
+  developerId           String?
+  publisherId           String?
+  bannerImage           String?
+  logoImage             String?
+  screenshots           String[]
+  trailerVideoUrl       String?
+  gameplayVideos        String[]
+  purchaseLinks         Json?
+  isActive              Boolean         @default(true)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  
+  developer             Developer?      @relation(fields: [developerId], references: [id])
+  publisher             Publisher?      @relation(fields: [publisherId], references: [id])
+  tags                  GameTag[]
+  categories            GameCategory[]
+  news                  News[]
+  reviews               Review[]
+  ratings               Rating[]
+  favorites             Favorite[]
+  wishlists             Wishlist[]
+  viewedBy              ViewedGame[]
+  similarGames          SimilarGame[]   @relation("SimilarGames")
+  relatedGames          SimilarGame[]   @relation("RelatedGames")
+  
+  @@map("games")
+}
+
+model Platform {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("platforms")
+}
+
+model Genre {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("genres")
+}
+
+model Developer {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  logo        String?
+  website     String?
+  foundedDate DateTime?
+  country     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  games       Game[]
+  
+  @@map("developers")
+}
+
+model Publisher {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  logo        String?
+  website     String?
+  foundedDate DateTime?
+  country     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  games       Game[]
+  
+  @@map("publishers")
+}
+
+model News {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  content       String
+  excerpt       String
+  featuredImage String?
+  authorId      String
+  gameId        String?
+  categoryId    String
+  tags          String[]
+  isFeatured    Boolean  @default(false)
+  isBreaking    Boolean  @default(false)
+  publishedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  author        User     @relation(fields: [authorId], references: [id])
+  game          Game?    @relation(fields: [gameId], references: [id])
+  category      NewsCategory @relation(fields: [categoryId], references: [id])
+  comments      Comment[]
+  
+  @@map("news")
+}
+
+model NewsCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  news        News[]
+  
+  @@map("news_categories")
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  content       String
+  overallScore  Float
+  graphicsScore Float?
+  gameplayScore Float?
+  storyScore    Float?
+  audioScore    Float?
+  performanceScore Float?
+  pros          String[]
+  cons          String[]
+  reviewerId    String
+  gameId        String
+  isEditorial   Boolean  @default(false)
+  publishedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  reviewer      User     @relation(fields: [reviewerId], references: [id])
+  game          Game     @relation(fields: [gameId], references: [id])
+  comments      Comment[]
+  userReviews   UserReview[]
+  
+  @@map("reviews")
+}
+
+model Rating {
+  id         String   @id @default(cuid())
+  score      Float
+  userId     String
+  gameId     String
+  createdAt  DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id])
+  game       Game     @relation(fields: [gameId], references: [id])
+  
+  @@unique([userId, gameId])
+  @@map("ratings")
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  gameId     String
+  createdAt  DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id])
+  game       Game     @relation(fields: [gameId], references: [id])
+  
+  @@unique([userId, gameId])
+  @@map("favorites")
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  userId     String
+  gameId     String
+  addedAt    DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id])
+  game       Game     @relation(fields: [gameId], references: [id])
+  
+  @@unique([userId, gameId])
+  @@map("wishlists")
+}
+
+model Comment {
+  id            String   @id @default(cuid())
+  content       String
+  userId        String
+  newsId        String?
+  reviewId      String?
+  parentId      String?
+  likes         Int      @default(0)
+  dislikes      Int      @default(0)
+  isApproved    Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User     @relation(fields: [userId], references: [id])
+  news          News?    @relation(fields: [newsId], references: [id])
+  review        Review?  @relation(fields: [reviewId], references: [id])
+  parent        Comment? @relation("CommentChildren", fields: [parentId], references: [id])
+  children      Comment[] @relation("CommentChildren")
+  
+  @@map("comments")
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  title         String
+  message       String
+  type          NotificationType
+  userId        String
+  targetUserId  String?
+  targetUrl     String?
+  isRead        Boolean  @default(false)
+  sentAt        DateTime @default(now())
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  targetUser    User?    @relation(fields: [targetUserId], references: [id])
+  
+  @@map("notifications")
+}
+
+enum NotificationType {
+  GAME_UPDATE
+  NEWS_PUBLISHED
+  REVIEW_PUBLISHED
+  COMMENT_REPLY
+  FOLLOW_REQUEST
+  SYSTEM_MESSAGE
+}
+
+model SearchHistory {
+  id         String   @id @default(cuid())
+  query      String
+  userId     String
+  searchType SearchType
+  count      Int      @default(1)
+  lastSearched DateTime @default(now())
+  createdAt  DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, query, searchType])
+  @@map("search_history")
+}
+
+enum SearchType {
+  GAME
+  NEWS
+  REVIEW
+  DEVELOPER
+  PUBLISHER
+  GENRE
+  PLATFORM
+}
+
+model ViewedGame {
+  id         String   @id @default(cuid())
+  userId     String
+  gameId     String
+  viewedAt   DateTime @default(now())
+  
+  user       User     @relation(fields: [userId], references: [id])
+  game       Game     @relation(fields: [gameId], references: [id])
+  
+  @@unique([userId, gameId])
+  @@map("viewed_games")
+}
+
+model GameDeal {
+  id                String   @id @default(cuid())
+  gameId            String
+  storeName         String
+  originalPrice     Float
+  currentPrice      Float
+  discountPercentage Int
+  discountEndDate   DateTime?
+  dealUrl           String
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  game              Game     @relation(fields: [gameId], references: [id])
+  
+  @@map("game_deals")
+}
+
+model FreeGame {
+  id                String   @id @default(cuid())
+  gameId            String
+  storeName         String
+  offerType         FreeGameType
+  startDate         DateTime
+  endDate           DateTime?
+  offerUrl          String
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  
+  game              Game     @relation(fields: [gameId], references: [id])
+  
+  @@map("free_games")
+}
+
+enum FreeGameType {
+  FREE_FOREVER
+  LIMITED_TIME
+  GIVEAWAY
+  FREE_WEEKEND
+}
+
+model SimilarGame {
+  id                String   @id @default(cuid())
+  sourceGameId      String
+  targetGameId      String
+  similarityScore   Float    @default(0)
+  createdAt         DateTime @default(now())
+  
+  sourceGame        Game     @relation("SimilarGames", fields: [sourceGameId], references: [id])
+  targetGame        Game     @relation("RelatedGames", fields: [targetGameId], references: [id])
+  
+  @@unique([sourceGameId, targetGameId])
+  @@map("similar_games")
+}
+
+model GameCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("game_categories")
+}
+
+model GameTag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("game_tags")
+}
+
+model UserReview {
+  id         String   @id @default(cuid())
+  content    String
+  rating     Float
+  helpful    Int      @default(0)
+  notHelpful Int      @default(0)
+  userId     String
+  reviewId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  user       User     @relation(fields: [userId], references: [id])
+  review     Review   @relation(fields: [reviewId], references: [id])
+  
+  @@unique([userId, reviewId])
+  @@map("user_reviews")
+}
+
+model Advertisement {
+  id            String   @id @default(cuid())
+  name          String
+  placement     AdPlacement
+  adCode        String?
+  imageUrl      String?
+  linkUrl       String?
+  priority      Int      @default(1)
+  isActive      Boolean  @default(true)
+  startDate     DateTime
+  endDate       DateTime?
+  impressions   Int      @default(0)
+  clicks        Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("advertisements")
+}
+
+enum AdPlacement {
+  HEADER
+  SIDEBAR
+  IN_ARTICLE
+  BETWEEN_SECTIONS
+  FOOTER
+  STICKY
+  MOBILE_BANNER
+  DESKTOP_SIDEBAR
+}
+
+model Analytics {
+  id            String   @id @default(cuid())
+  pageUrl       String
+  visitorId     String
+  userAgent     String?
+  ip            String?
+  referrer      String?
+  timestamp     DateTime @default(now())
+  
+  @@map("analytics")
+}
+
+model CronJob {
+  id            String   @id @default(cuid())
+  jobName       String
+  status        JobStatus
+  lastRun       DateTime?
+  nextRun       DateTime?
+  errorLog      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("cron_jobs")
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model ApiKey {
+  id            String   @id @default(cuid())
+  name          String
+  key           String   @unique
+  userId        String
+  permissions   String[]
+  isActive      Boolean  @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@map("api_keys")
+}
